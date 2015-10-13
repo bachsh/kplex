@@ -5,6 +5,28 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
+def olderBrother(T, v, vb):
+    p = T.predecessors(v)[0]
+    return vb in T.successors(p)
+
+def kConnectedToBranch(G, T, parent, v_cand, k):
+    neighbors = G.edges(v_cand)
+    count = 0 if parent[1] in neighbors else 1
+    while count < k and T.predecessors(parent) != []:
+        parent = T.predecessors(parent)[0]
+        count += not parent[1] in neighbors
+    return count < k
+
+def kplexTree(G, T, parent, candidates, degree, k):
+    if candidates == {}:
+        return
+    for v_cand in candidates:
+        if kConnectedToBranch(G, T, parent, v_cand, k):
+            T.add_node((degree+1, v_cand))
+            T.add_edge((degree, parent), (degree+1, v_cand))
+        kplexTree(G, T, parent, candidates-{v_cand}, degree+1)
+
+
 if __name__ == "__main__":
 
     networkFile = "smallExamples/net20_30.net"
@@ -16,14 +38,20 @@ if __name__ == "__main__":
     plt.show(block=False)
 
     nodeList = G.nodes()
+    N = len(G.nodes())
+
+    trees = list()
+
+    candidates = range(N)
 
     for v in nodeList:
-        print v
-        depth = 0
-        tree = nx.Graph()
-        tree.add_node((depth, v))
+        tree = nx.DiGraph()
+        tree.add_node((0, v))
 
-        print tree
+
+
+
+        trees.append(tree)
 
 
     pass
