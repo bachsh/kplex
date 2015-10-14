@@ -72,21 +72,45 @@ def kplexesFromTree(T, node = ROOT):
     return kplexes
 
 
-def kplexAlg(G, k):
+def getMaximalSets(S):
+    S_copy = copy(S)
+    for s in S:
+        for s2 in S_copy:
+            if len(s) >= len(s2):
+                continue
+            if s.issubset(s2):
+                # print "removing", s, s2
+                S_copy.remove(s)
+                break
+    return S_copy
+
+
+def kplexAlg(G, k, verbose=False):
     tree = nx.DiGraph()
     tree.add_node(ROOT)
     candidates = G.nodes()
 
+    if verbose:
+        print "Building auxiliary tree..."
     kplexTree(G, tree, candidates, k)
-    return kplexesFromTree(tree)
-
+    if verbose:
+        print "Done Building auxiliary tree"
+        print "Reading all kplexes..."
+    kplexFull = kplexesFromTree(tree)
+    if verbose:
+        print "Reading all kplexes"
+        print "Getting maximal kplexes..."
+    kplexMax = getMaximalSets(kplexFull)
+    if verbose:
+        print "Done Getting maximal kplexes"
+    return kplexFull, kplexMax
 
 
 if __name__ == "__main__":
 
     networkFile = "smallExamples/net20_30.net"
     # G = nx.read_pajek(networkFile)
-    G = nx.fast_gnp_random_graph(20, 0.2)
+    # G = nx.fast_gnp_random_graph(20, 0.2)
 
     G = nx.Graph({
         0: {1,2},
@@ -116,9 +140,11 @@ if __name__ == "__main__":
     print "Nodes: {}".format(G.nodes())
 
     k = 2
-    kplexes = kplexAlg(G, k)
+    kplexes, kplexesMax = kplexAlg(G, k)
     print "List of {}-plexes".format(k)
     print kplexes
+    print kplexesMax
     plt.figure()
 
     raw_input("Press <Enter> to continue")
+
