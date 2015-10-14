@@ -54,7 +54,7 @@ def kplexTree(G, T, candidates, k, parent = ROOT, degree = -1, ind = 0):
 def kplexFromLeaf(T, leaf):
     if leaf == ROOT:
         return set()
-    print leaf
+    # print leaf
     res = kplexFromLeaf(T, T.predecessors(leaf)[0])
     res.add(leaf[1])
     return res
@@ -75,10 +75,11 @@ def kplexesFromTree(T, node = ROOT):
 def kplexAlg(G, k):
     tree = nx.DiGraph()
     tree.add_node(ROOT)
-    candidates = set(range(N))
+    candidates = G.nodes()
 
     kplexTree(G, tree, candidates, k)
     return kplexesFromTree(tree)
+
 
 
 if __name__ == "__main__":
