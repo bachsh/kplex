@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from copy import copy
 from time import sleep
 
-ROOT = (-1, -1, None)
+ROOT = (-1, -1, 0, None)
 global_index = 0
 
 def olderBrother(T, v, vb):
@@ -73,6 +73,20 @@ def kplexesFromTree(T, node = ROOT):
 
 
 def getMaximalSets(S):
+    sortedSets = sorted(S, key = len)
+    sortedSets = filter(lambda x: len(x)>2, sortedSets)
+    maximalSets = []
+    N = len(sortedSets)
+    for i in range(N):
+        for i2 in range(N-1, -1, -1):
+            if len(sortedSets[i]) >= len(sortedSets[i2]):
+                maximalSets.append(sortedSets[i])
+                break
+            if sortedSets[i].issubset(sortedSets[i2]):
+                break
+    return maximalSets
+
+def getMaximalSetsV1(S):
     S_copy = copy(S)
     for s in S:
         for s2 in S_copy:
@@ -98,7 +112,7 @@ def kplexAlg(G, k, verbose=False):
         print "Reading all kplexes..."
     kplexFull = kplexesFromTree(tree)
     if verbose:
-        print "Reading all kplexes"
+        print "Done Reading all kplexes"
         print "Getting maximal kplexes..."
     kplexMax = getMaximalSets(kplexFull)
     if verbose:
