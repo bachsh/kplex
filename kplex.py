@@ -158,36 +158,157 @@ def getMaximalSets(sets):
         maxSets.extend(setsBySize[i])
     return maxSets
 
-def kplexAlg(G, k, verbose=False):
-    if verbose:
-        print "Building auxiliary tree..."
-    tree, rightSiblings = initKplexTree(G)
-    rightSiblings = set(rightSiblings)
-    leftSiblings = set()
-    ind = 0
-    while len(rightSiblings) > 0:
-        head = rightSiblings.pop()
-        ind = kplexTree(G, tree, leftSiblings, rightSiblings, k, head, 0, ind)
-        leftSiblings.add(head)
-        # print "done with {}".format(head)
-    if verbose:
-        print "Done Building auxiliary tree"
-        print "Reading all kplexes..."
 
-    # print "Writing to file"
-    # nx.write_dot(tree, "tree.dot")
+def connected(G, v, subset):
+    neighbors = G.neighbors(v)
+    for node in subset:
+        if node in neighbors:
+            return True
+    return False
 
-    kplexFull = kplexesFromTree(tree)
-    kplexPartial = kplexesFromLeaves(tree)
-    if verbose:
-        print "Done Reading all kplexes"
-        print "Getting maximal kplexes..."
-    # kplexMax = kplexFull
-    kplexMax = getMaximalSets(kplexPartial)
-    # kplexMax = getMaximalSets(kplexFull)
-    if verbose:
-        print "Done Getting maximal kplexes"
-    return kplexFull, kplexMax
+# Function: FindAllMaxKplex (inputCompsub, inputCandidate, inputNot)
+def FindAllMaxKplex(G, k, kplexesList, inputCompsub, inputCompsubCount, inputCandidate, inputCandidateCount, inputNotset, inputNotsetCount):
+# 6: Copy inputCompsub to compsub. Copy inputCandidate to candidate. Copy inputNot to not;
+    compsub = copy(inputCompsub)
+    compsubCount = copy(inputCompsubCount)
+    candidate = copy(inputCandidate)
+    candidateCount = copy(inputCandidateCount)
+    notset = copy(inputNotset)
+    notsetCount = copy(inputNotsetCount)
+
+# 7: Select a vertex v in connected_candidate of inputCandidate in lexicographic order;
+    if len(compsub) == 0:
+        for node in inputCandidate:
+            v = node
+            break
+    else:
+        for node in inputCandidate:
+            if connected(G, node, compsub):
+                v = node
+                break
+# 8: Move v to compsub and Update the counters of the vertices in compsub;
+    try:
+        vNeighbors = set(G.neighbors(v))
+    except:
+        return None
+    for node in compsub:
+        if node not in vNeighbors:
+            compsubCount[node] += 1
+    compsubCount[v] = len(compsub) - len(vNeighbors & compsub)
+    compsub.add(v)
+    candidate.remove(v)
+# 9: if there are n critical vertices in compsub (n > 0):
+# 10:   Compute the intersection C of the neighborhoods of the n critical vertices and Remove all the vertices in candidate and not which are not in C;
+    criticalNodes = filter(lambda node: compsubCount[node] == k-1, compsub)
+    if len(criticalNodes) > 0:
+        C = set(G.nodes())
+        for node in criticalNodes:
+            C &= set(G.neighbors(node))
+        candidate &= C
+        notset &= C
+
+# 11: Update the counters of the vertices in candidate and not and Remove the vertices of candidate and not if the vertices
+# can not expand compsub (the counter is greater than k-1);
+    disqualCandidate = set()
+    for node in candidate:
+        if node not in vNeighbors:
+            candidateCount[node] += 1
+            if candidateCount[node] > k-1:
+                disqualCandidate.add(node)
+    candidate -= disqualCandidate
+    disqualNotset = set()
+    for node in notset:
+        if node not in vNeighbors:
+            notsetCount[node] += 1
+            if notsetCount[node] > k-1:
+                disqualNotset.add(node)
+    notset -= disqualNotset
+
+# 12: Generate connected_candidate of candidate and connected_not of not;
+    connectedCandidate = set()
+    for node in candidate:
+        if connected(G, node, compsub):
+            connectedCandidate.add(node)
+    connectedNot = set()
+    for node in notset:
+        if connected(G, node, compsub):
+            connectedNot.add(node)
+# 13: if connected_candidate and connected_not are empty:
+    if len(connectedCandidate) == 0 and len(connectedNot) == 0:
+# 14:    compsub is a maximal k-plex, Return v;
+        kplexesList.append(compsub)
+        return v
+# 15: if connected_candidate is empty and connected_not is not empty:
+    if len(connectedCandidate) == 0:
+# 16:   Return that there are no vertices which can expand compsub;
+        return None
+# 17: if connected_candidate and connected_not is not empty:
+# 18: while there are vertices in candidate:
+    while len(candidate) > 0:
+# 19:   Call FindAllMaxKplex(compsub,candidate,not);
+        v1 = FindAllMaxKplex(G, k, kplexesList, compsub, compsubCount, candidate, candidateCount, notset, notsetCount)
+        if v1 == None:
+            return v
+        candidate.remove(v1)
+# 20:   Move the used vertex to not upon the return;
+        notset.add(v1)
+# 21: endwhile;
+# 22: Return v;
+    return v
+
+
+
+
+def kplexAlg(G, k, verbose=False, method=None):
+    if method == None:
+        method = "wu"
+    if method == "tree":
+        if verbose:
+            print "Building auxiliary tree..."
+        tree, rightSiblings = initKplexTree(G)
+        rightSiblings = set(rightSiblings)
+        leftSiblings = set()
+        ind = 0
+        while len(rightSiblings) > 0:
+            head = rightSiblings.pop()
+            ind = kplexTree(G, tree, leftSiblings, rightSiblings, k, head, 0, ind)
+            leftSiblings.add(head)
+            # print "done with {}".format(head)
+        if verbose:
+            print "Done Building auxiliary tree"
+            print "Reading all kplexes..."
+
+        # print "Writing to file"
+        # nx.write_dot(tree, "tree.dot")
+
+        kplexFull = kplexesFromTree(tree)
+        kplexPartial = kplexesFromLeaves(tree)
+        if verbose:
+            print "Done Reading all kplexes"
+            print "Getting maximal kplexes..."
+        # kplexMax = kplexFull
+        kplexMax = getMaximalSets(kplexPartial)
+        # kplexMax = getMaximalSets(kplexFull)
+        if verbose:
+            print "Done Getting maximal kplexes"
+        return kplexFull, kplexMax
+
+    if method == "wu": # Pemp algorithm by Wu and Pei
+        compsub = set()
+        candidate = set(G.nodes())
+        notset = set()
+        candidateCount = {x:0 for x in candidate}
+        kplexMax = []
+        notset = set()
+        notsetCount = {x:0 for x in candidate}
+        while len(candidate) > 0:
+            v = FindAllMaxKplex(G, k, kplexMax, set(), {}, candidate, candidateCount, notset, notsetCount)
+            if v == None:
+                break
+            candidate.remove(v)
+            notset.add(v)
+        return kplexMax, kplexMax
+
 
 
 if __name__ == "__main__":
