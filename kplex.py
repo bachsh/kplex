@@ -241,7 +241,7 @@ def FindAllMaxKplex(G, k, kplexesList, inputCompsub, inputCompsubCount, inputCan
 # 15: if connected_candidate is empty and connected_not is not empty:
     if len(connectedCandidate) == 0:
 # 16:   Return that there are no vertices which can expand compsub;
-        return None
+        return v
 # 17: if connected_candidate and connected_not is not empty:
 # 18: while there are vertices in candidate:
     while len(candidate) > 0:
