@@ -252,6 +252,7 @@ def FindAllMaxKplex(G, k, kplexesList, inputCompsub, inputCompsubCount, inputCan
         candidate.remove(v1)
 # 20:   Move the used vertex to not upon the return;
         notset.add(v1)
+        notsetCount[v1] = candidateCount[v1]
 # 21: endwhile;
 # 22: Return v;
     return v
@@ -303,6 +304,7 @@ def kplexAlg(G, k, verbose=False, method=None):
         notsetCount = {x:0 for x in candidate}
         while len(candidate) > 0:
             v = FindAllMaxKplex(G, k, kplexMax, set(), {}, candidate, candidateCount, notset, notsetCount)
+            print v
             if v == None:
                 break
             candidate.remove(v)
